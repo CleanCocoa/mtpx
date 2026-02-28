@@ -10,22 +10,36 @@ struct DeviceCommand: AsyncParsableCommand {
 	)
 
 	struct List: AsyncParsableCommand {
-		static let configuration = CommandConfiguration(abstract: "List saved device aliases.")
+		static let configuration = CommandConfiguration(abstract: "List saved device aliases and connected devices.")
 
 		func run() async throws {
 			let config = (try? DeviceConfig.load(from: DeviceConfig.configURL)) ?? DeviceConfig()
 			if config.aliases.isEmpty {
 				print("No device aliases configured.")
-				return
-			}
-			for (name, alias) in config.aliases.sorted(by: { $0.key < $1.key }) {
-				let isDefault = config.defaultDevice == name ? " (default)" : ""
-				switch alias {
-				case .serial(let serial):
-					print("\(name): serial:\(serial)\(isDefault)")
-				case .fallback(let vendor, let product, let bus):
-					print("\(name): \(vendor) \(product)@\(bus)\(isDefault)")
+			} else {
+				for (name, alias) in config.aliases.sorted(by: { $0.key < $1.key }) {
+					let isDefault = config.defaultDevice == name ? " (default)" : ""
+					switch alias {
+					case .serial(let serial):
+						print("\(name): serial:\(serial)\(isDefault)")
+					case .fallback(let vendor, let product, let bus):
+						print("\(name): \(vendor) \(product)@\(bus)\(isDefault)")
+					}
 				}
+			}
+
+			if let devices = try? {
+				try MTP.initialize()
+				return try MTP.detectDevices()
+			}(), !devices.isEmpty {
+				if !config.aliases.isEmpty { print() }
+				print("Connected devices:")
+				for (i, d) in devices.enumerated() {
+					print("  \(i + 1). \(d.vendor) \(d.product)")
+				}
+				print("\nRun 'mtpx device add' to save a device alias.")
+			} else if config.aliases.isEmpty {
+				print("\nConnect a device and run 'mtpx device add' to get started.")
 			}
 		}
 	}
@@ -33,8 +47,8 @@ struct DeviceCommand: AsyncParsableCommand {
 	struct Add: AsyncParsableCommand {
 		static let configuration = CommandConfiguration(abstract: "Add a device alias.")
 
-		@Argument(help: "Name for the alias.")
-		var name: String
+		@Argument(help: "Name for the alias (prompted if omitted).")
+		var name: String?
 
 		func run() async throws {
 			try MTP.initialize()
@@ -46,8 +60,9 @@ struct DeviceCommand: AsyncParsableCommand {
 			let selected: RawDevice
 			if devices.count == 1 {
 				selected = devices[0]
+				print("Found \(selected.vendor) \(selected.product)")
 			} else {
-				print("Available devices:\n")
+				print("Connected devices:\n")
 				for (i, d) in devices.enumerated() {
 					print("  \(i + 1). \(d.vendor) \(d.product)")
 				}
@@ -57,6 +72,18 @@ struct DeviceCommand: AsyncParsableCommand {
 					return
 				}
 				selected = devices[choice - 1]
+			}
+
+			let name: String
+			if let given = self.name {
+				name = given
+			} else {
+				print("Alias: ", terminator: "")
+				guard let line = readLine(), !line.isEmpty else {
+					print("Cancelled.")
+					return
+				}
+				name = line
 			}
 
 			var raw = selected

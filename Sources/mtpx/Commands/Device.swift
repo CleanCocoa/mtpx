@@ -84,7 +84,7 @@ struct DeviceCommand: AsyncParsableCommand {
 	struct Remove: AsyncParsableCommand {
 		static let configuration = CommandConfiguration(abstract: "Remove a device alias.")
 
-		@Argument(help: "Alias to remove.")
+		@Argument(help: "Alias to remove.", completion: .custom(Completions.deviceAlias))
 		var name: String
 
 		func run() throws {
@@ -104,7 +104,7 @@ struct DeviceCommand: AsyncParsableCommand {
 	struct Default: AsyncParsableCommand {
 		static let configuration = CommandConfiguration(abstract: "Get or set the default device.")
 
-		@Argument(help: "Alias to set as default.")
+		@Argument(help: "Alias to set as default.", completion: .custom(Completions.deviceAlias))
 		var name: String?
 
 		@Flag(help: "Clear the default device.")

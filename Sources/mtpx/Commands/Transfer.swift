@@ -8,10 +8,16 @@ struct Transfer: AsyncParsableCommand {
 		abstract: "Transfer files between local filesystem and MTP device."
 	)
 
-	@Argument(help: "Source path (local or @alias:/remote)")
+	@Argument(
+		help: "Source path (local or @alias:/remote)",
+		completion: .custom(Completions.transferPath)
+	)
 	var source: String
 
-	@Argument(help: "Destination path (local or @alias:/remote)")
+	@Argument(
+		help: "Destination path (local or @alias:/remote)",
+		completion: .custom(Completions.transferPath)
+	)
 	var destination: String
 
 	@Flag(name: .shortAndLong, help: "Transfer directories recursively.")

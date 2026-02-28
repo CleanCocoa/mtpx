@@ -8,7 +8,10 @@ struct Ls: AsyncParsableCommand {
 		abstract: "List contents of a remote directory."
 	)
 
-	@Argument(help: "Remote path, e.g. @phone:/DCIM or :/Music")
+	@Argument(
+		help: "Remote path, e.g. @phone:/DCIM or :/Music",
+		completion: .custom(Completions.remotePath)
+	)
 	var remotePath: String
 
 	func run() async throws {

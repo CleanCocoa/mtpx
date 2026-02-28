@@ -5,23 +5,43 @@ Command-line tool for transferring files to and from MTP devices, built on Swift
 ## Usage
 
 ```
-mtpx upload <local-path> [<device>:]<remote-path>
-mtpx pull <device>:<remote-path> <local-path>
-mtpx ls [<device>:]<remote-path>
-mtpx devices [list | add | remove | default]
+mtpx <source> <dest>
+mtpx ls <remote-path>
+mtpx device [list | add | remove | default]
 ```
+
+Transfer direction is inferred from which argument is a remote path. A remote path is any path prefixed with a colon — either `@alias:/path` (explicit device) or `:/path` (device resolved automatically).
+
+```
+mtpx photo.jpg @phone:/DCIM/          # local → device
+mtpx @phone:/DCIM/photo.jpg ./        # device → local
+mtpx photo.jpg :/DCIM/                # local → device, device resolved
+mtpx :/DCIM/photo.jpg ./              # device → local, device resolved
+```
+
+## Remote Path Syntax
+
+A colon-prefixed path is a remote (device) path. The optional `@alias` before the colon selects a specific device:
+
+```
+@phone:/DCIM/photo.jpg      explicit device "phone", path /DCIM/photo.jpg
+:/Documents/                resolved device, path /Documents/
+```
+
+The `@` prefix distinguishes device aliases from path components. Substrings of model names work as fuzzy matches (e.g., `@pixel` matches "Pixel 8" if unambiguous).
+
+When no `@alias` is given, the device is resolved through the resolution chain below.
 
 ## Device Resolution
 
-When a command needs a target device, `mtpx` resolves it through this chain (first match wins):
+When a command needs a target device and none is specified explicitly, `mtpx` resolves it through this chain (first match wins):
 
-1. **Explicit `@alias`** in the command — `mtpx upload file.txt @phone:/Documents/`
-2. **`MTPX_DEVICE` environment variable** — alias name or serial string
-3. **Single connected device** — auto-selected, no config needed
-4. **Default device** in config — the entry with `default = true`
-5. **Interactive picker** — numbered list of connected devices; offers to save an alias
+1. **`MTPX_DEVICE` environment variable** — alias name or serial string
+2. **Single connected device** — auto-selected, no config needed
+3. **Default device** in config — the entry with `default = true`
+4. **Interactive picker** — numbered list of connected devices; offers to save an alias (TTY only; errors in non-interactive contexts)
 
-The `@` prefix distinguishes device aliases from file paths. Substrings of model names also work as fuzzy matches (e.g., `@pixel` matches "Pixel 8" if unambiguous).
+The resolved device is always printed to stderr so the user knows which device was selected.
 
 ## Device Identification
 
@@ -77,34 +97,28 @@ A device entry must have either `serial` or the full `(vendor, product, bus)` tr
 
 ## Commands
 
-### `mtpx upload <local-path> [<device>:]<remote-path>`
+### `mtpx <source> <dest>`
 
-Upload a local file or directory to the device. Creates intermediate directories on the device as needed.
-
-```
-mtpx upload photo.jpg @phone:/DCIM/
-mtpx upload ./docs/ @tablet:/Documents/sync/
-```
-
-### `mtpx pull [<device>:]<remote-path> <local-path>`
-
-Download a file or directory from the device to the local filesystem.
+Transfer a file or directory. Exactly one of `<source>` or `<dest>` must be a remote path (colon-prefixed). Creates intermediate directories on the device as needed.
 
 ```
-mtpx pull @phone:/DCIM/photo.jpg ./
-mtpx pull @supernote:/Document/notes/ ./backup/
+mtpx photo.jpg @phone:/DCIM/
+mtpx ./docs/ @tablet:/Documents/sync/
+mtpx @phone:/DCIM/photo.jpg ./
+mtpx @supernote:/Document/notes/ ./backup/
+mtpx :/DCIM/photo.jpg ./
 ```
 
-### `mtpx ls [<device>:]<remote-path>`
+### `mtpx ls <remote-path>`
 
 List files and directories at the given path on the device.
 
 ```
 mtpx ls @phone:/
-mtpx ls /Documents/
+mtpx ls :/Documents/
 ```
 
-### `mtpx devices`
+### `mtpx device`
 
 Manage device aliases.
 
@@ -113,36 +127,37 @@ Manage device aliases.
 | `list` (default) | Show saved aliases and their connection status |
 | `add <alias>` | Interactively save the connected device as `<alias>` |
 | `remove <alias>` | Delete a saved alias |
-| `default <alias>` | Set a device as the default |
+| `default` | Show the current default device |
+| `default set <alias>` | Set a device as the default |
+| `default clear` | Remove the default device setting |
 
-## Subcommands — Roadmap
+## Roadmap
 
-### v0.1 — Foundation
+### 0.1.0 — Foundation
 
-- [ ] `devices list` — enumerate connected MTP devices
-- [ ] `devices add` — save alias interactively
+- [ ] `device list` — enumerate connected MTP devices
+- [ ] `device add` — save alias interactively
 - [ ] Config file read/write (TOML, XDG path)
-- [ ] Device resolution chain (all 5 tiers)
+- [ ] Device resolution chain (all 4 tiers)
 - [ ] `ls` — list remote directory contents
 
-### v0.2 — Transfers
+### 0.2.0 — Transfers
 
-- [ ] `upload` — single file upload with progress
-- [ ] `pull` — single file download with progress
-- [ ] Directory upload/download (recursive)
+- [ ] Single file transfer with progress
+- [ ] Directory transfer (recursive)
 - [ ] Create intermediate remote directories
 
-### v0.3 — Polish
+### 0.3.0 — Polish
 
 - [ ] Shell completions (zsh, bash, fish) via ArgumentParser
 - [ ] Fuzzy model-name matching for `@` aliases
-- [ ] `devices remove`, `devices default`
+- [ ] `device remove`, `device default set`, `device default clear`
 - [ ] Exit codes and structured error messages
 
 ### Future
 
-- Sync mode (upload only changed files)
-- Watch mode (upload on local file change)
+- Sync mode (transfer only changed files)
+- Watch mode (transfer on local file change)
 - Color output and progress bars
 
 ## Dependencies
@@ -162,10 +177,9 @@ mtpx/
     mtpx/
       Mtpx.swift              — @main AsyncParsableCommand
       Commands/
-        Upload.swift
-        Pull.swift
+        Transfer.swift
         Ls.swift
-        Devices.swift
+        Device.swift
       Device/
         DeviceAlias.swift      — Codable alias model
         DeviceConfig.swift     — reads/writes config.toml

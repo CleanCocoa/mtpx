@@ -1,15 +1,27 @@
 // swift-tools-version: 6.2
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
-    name: "mtpx",
-    targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
-        .executableTarget(
-            name: "mtpx"
-        ),
-    ]
+	name: "mtpx",
+	platforms: [.macOS(.v26)],
+	dependencies: [
+		.package(path: "../swift-mtp"),
+		.package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
+		.package(url: "https://github.com/LebJe/TOMLKit", from: "0.6.0"),
+	],
+	targets: [
+		.executableTarget(
+			name: "mtpx",
+			dependencies: [
+				.product(name: "SwiftMTPAsync", package: "swift-mtp"),
+				.product(name: "ArgumentParser", package: "swift-argument-parser"),
+				.product(name: "TOMLKit", package: "TOMLKit"),
+			]
+		),
+		.testTarget(
+			name: "mtpxTests",
+			dependencies: ["mtpx"]
+		),
+	]
 )

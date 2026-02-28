@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=d -- '*.swift')
+[ -z "$staged" ] && exit 0
+
+swift-format lint --strict --parallel $staged

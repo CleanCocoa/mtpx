@@ -59,10 +59,11 @@ struct Transfer: AsyncParsableCommand {
 				to: destURL
 			)
 		} else {
-			try await session.download(fileInfo.id, to: destURL) { sent, total in
-				printProgress(sent: sent, total: total)
-				return .continue
-			}
+			try await session.download(
+				fileInfo.id,
+				to: destURL,
+				progress: Self.makeProgressHandler(for: fileInfo.name)
+			)
 			print("\nDownloaded: \(fileInfo.name)")
 		}
 	}
@@ -122,11 +123,9 @@ struct Transfer: AsyncParsableCommand {
 				from: sourceURL,
 				to: parentFolder,
 				storage: storageId,
-				as: fileName
-			) { sent, total in
-				printProgress(sent: sent, total: total)
-				return .continue
-			}
+				as: fileName,
+				progress: Self.makeProgressHandler(for: fileName)
+			)
 			print("\nUploaded: \(result.name)")
 		}
 	}
@@ -149,10 +148,11 @@ struct Transfer: AsyncParsableCommand {
 					to: itemURL
 				)
 			} else {
-				try await session.download(item.id, to: itemURL) { sent, total in
-					printProgress(sent: sent, total: total)
-					return .continue
-				}
+				try await session.download(
+					item.id,
+					to: itemURL,
+					progress: Self.makeProgressHandler(for: item.name)
+				)
 				print("\nDownloaded: \(item.name)")
 			}
 		}
@@ -182,10 +182,12 @@ struct Transfer: AsyncParsableCommand {
 					storageId: storageId
 				)
 			} else {
-				let result = try await session.upload(from: item, to: newFolder, storage: storageId) { sent, total in
-					printProgress(sent: sent, total: total)
-					return .continue
-				}
+				let result = try await session.upload(
+					from: item,
+					to: newFolder,
+					storage: storageId,
+					progress: Self.makeProgressHandler(for: item.lastPathComponent)
+				)
 				print("\nUploaded: \(result.name)")
 			}
 		}
@@ -222,10 +224,17 @@ struct Transfer: AsyncParsableCommand {
 		return current
 	}
 
-	private func printProgress(sent: UInt64, total: UInt64) {
-		guard total > 0 else { return }
-		let pct = Int(Double(sent) / Double(total) * 100)
-		print("\r\(pct)%", terminator: "")
-		fflush(stdout)
+	private static func makeProgressHandler(for name: String) -> @Sendable (UInt64, UInt64) -> ProgressAction {
+		nonisolated(unsafe) var lastPct = -1
+		return { sent, total in
+			guard total > 0 else { return .continue }
+			let pct = Int(Double(sent) / Double(total) * 100)
+			if pct != lastPct {
+				lastPct = pct
+				print("\r\(name): \(pct)%", terminator: "    ")
+				fflush(stdout)
+			}
+			return .continue
+		}
 	}
 }

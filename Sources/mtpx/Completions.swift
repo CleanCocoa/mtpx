@@ -108,21 +108,58 @@ enum Completions {
 			.map { "@\($0):" }
 	}
 
-	private static func muteStdout() -> Int32 {
-		fflush(stdout)
-		let saved = dup(STDOUT_FILENO)
+	private static let cacheTTL: TimeInterval = 30
+	private static let cacheDir =
+		FileManager.default.temporaryDirectory.appending(path: "mtpx-completions")
+
+	private static func cachedCompletions(
+		alias: String?,
+		parentPath: String
+	) -> [String]? {
+		let key = "\(alias ?? "_")_\(parentPath)"
+			.replacingOccurrences(of: "/", with: "_")
+		let file = cacheDir.appending(path: key)
+		guard
+			let attrs = try? FileManager.default.attributesOfItem(atPath: file.path()),
+			let modified = attrs[.modificationDate] as? Date,
+			Date().timeIntervalSince(modified) < cacheTTL,
+			let data = try? Data(contentsOf: file)
+		else { return nil }
+		return try? JSONDecoder().decode([String].self, from: data)
+	}
+
+	private static func cacheCompletions(
+		_ completions: [String],
+		alias: String?,
+		parentPath: String
+	) {
+		let key = "\(alias ?? "_")_\(parentPath)"
+			.replacingOccurrences(of: "/", with: "_")
+		try? FileManager.default.createDirectory(
+			at: cacheDir,
+			withIntermediateDirectories: true
+		)
+		let file = cacheDir.appending(path: key)
+		if let data = try? JSONEncoder().encode(completions) {
+			try? data.write(to: file)
+		}
+	}
+
+	private static func muteStderr() -> Int32 {
+		fflush(stderr)
+		let saved = dup(STDERR_FILENO)
 		let devNull = open("/dev/null", O_WRONLY)
 		if devNull >= 0 {
-			dup2(devNull, STDOUT_FILENO)
+			dup2(devNull, STDERR_FILENO)
 			close(devNull)
 		}
 		return saved
 	}
 
-	private static func restoreStdout(_ saved: Int32) {
+	private static func restoreStderr(_ saved: Int32) {
 		guard saved >= 0 else { return }
-		fflush(stdout)
-		dup2(saved, STDOUT_FILENO)
+		fflush(stderr)
+		dup2(saved, STDERR_FILENO)
 		close(saved)
 	}
 
@@ -154,8 +191,15 @@ enum Completions {
 			}
 		}
 
-		let saved = muteStdout()
-		defer { restoreStdout(saved) }
+		if let cached = cachedCompletions(alias: remote.alias, parentPath: parentPath) {
+			let loweredPrefix = namePrefix.lowercased()
+			return cached.filter {
+				loweredPrefix.isEmpty || $0.lowercased().contains(loweredPrefix)
+			}
+		}
+
+		let saved = muteStderr()
+		defer { restoreStderr(saved) }
 
 		do {
 			try MTP.initialize()
@@ -177,10 +221,8 @@ enum Completions {
 				entries = try await session.contents(of: folder, storage: .all)
 			}
 
-			let loweredPrefix = namePrefix.lowercased()
-			return
+			let allCompletions =
 				entries
-				.filter { loweredPrefix.isEmpty || $0.name.lowercased().hasPrefix(loweredPrefix) }
 				.sorted {
 					$0.name.localizedStandardCompare($1.name) == .orderedAscending
 				}
@@ -192,6 +234,13 @@ enum Completions {
 						: "\(parentPath)\(entry.name)\(suffix)"
 					return "\(aliasPrefix)\(entryPath)"
 				}
+
+			cacheCompletions(allCompletions, alias: remote.alias, parentPath: parentPath)
+
+			let loweredPrefix = namePrefix.lowercased()
+			return allCompletions.filter {
+				loweredPrefix.isEmpty || $0.lowercased().contains(loweredPrefix)
+			}
 		} catch {
 			return []
 		}

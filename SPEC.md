@@ -6,6 +6,7 @@ Command-line tool for transferring files to and from MTP devices, built on Swift
 
 ```
 mtpx <source> <dest>
+mtpx sync <remote-dir> <local-dir>
 mtpx ls <remote-path>
 mtpx device [list | add | remove | default]
 ```
@@ -109,6 +110,19 @@ mtpx @supernote:/Document/notes/ ./backup/
 mtpx :/DCIM/photo.jpg ./
 ```
 
+### `mtpx sync <remote-dir> <local-dir>`
+
+Download only files that have changed from a remote directory. Compares each remote file against the local copy by size and modification date — files that already exist locally and are unchanged are skipped.
+
+```
+mtpx sync @sn:/Note/ ./notes-backup/
+mtpx sync --dry-run @phone:/DCIM/ ./photos/
+```
+
+| Flag | Description |
+|------|-------------|
+| `--dry-run` / `-n` | List files that would be downloaded without transferring |
+
 ### `mtpx ls <remote-path>`
 
 List files and directories at the given path on the device.
@@ -154,9 +168,13 @@ Manage device aliases.
 - [ ] `device remove`, `device default set`, `device default clear`
 - [ ] Exit codes and structured error messages
 
+### 0.5.0 — Sync
+
+- [x] `sync` command — download only changed files (by size + modification date)
+- [x] `--dry-run` flag to preview without transferring
+
 ### Future
 
-- Sync mode (transfer only changed files)
 - Watch mode (transfer on local file change)
 - Color output and progress bars
 

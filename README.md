@@ -76,6 +76,15 @@ mtpx -r <source> <destination>    # recursive for directories
 
 Direction is inferred: whichever argument has a colon prefix is the remote side.
 
+### sync
+
+```
+mtpx sync @phone:/DCIM/ ./backup/      # download only changed files
+mtpx sync --dry-run @sn:/Note/ ./notes/ # preview what would download
+```
+
+Compares remote files against the local copy by size and modification date. Only files that are new or have changed on the device are downloaded — unchanged files are skipped.
+
 ### ls
 
 ```
@@ -141,6 +150,22 @@ Pull your notes:
 mtpx @sn:/Note/meeting.note ./
 mtpx -r @sn:/Note/ ./notes-backup/
 ```
+
+### Syncing Only Changed Notes
+
+Use `sync` to keep a local mirror of your notes without re-downloading everything each time. Only files that are new or modified on the Supernote are transferred:
+
+```
+mtpx sync @sn:/Note/ ./notes-backup/
+```
+
+Preview what would be downloaded before transferring:
+
+```
+mtpx sync --dry-run @sn:/Note/ ./notes-backup/
+```
+
+This compares each remote file's size and modification date against the local copy. Unchanged files are skipped, so repeated syncs are fast even for large note collections.
 
 Browse what's on the device:
 

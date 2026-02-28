@@ -230,7 +230,7 @@ struct Transfer: AsyncParsableCommand {
 		return current
 	}
 
-	private static func makeProgressHandler(for name: String) -> @Sendable (UInt64, UInt64) -> ProgressAction {
+	static func makeProgressHandler(for name: String) -> @Sendable (UInt64, UInt64) -> ProgressAction {
 		nonisolated(unsafe) var lastPct = -1
 		return { sent, total in
 			guard total > 0 else { return .continue }

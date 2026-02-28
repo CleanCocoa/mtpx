@@ -11,10 +11,18 @@ mint install codeberg.org/ctietze/mtpx
 
 ## Quick Start
 
-Name your device once:
+Add your device interactively:
 
 ```
-mtpx device add phone
+$ mtpx device add
+Connected devices:
+
+  1. Samsung Galaxy S24
+  2. Boox Tab Ultra
+
+Select device (1-2): 1
+Alias: phone
+Saved alias 'phone'.
 ```
 
 Then transfer files using `@alias:/path` syntax:
@@ -77,8 +85,8 @@ mtpx ls @phone:/DCIM/
 ### device
 
 ```
-mtpx device list                  # show saved aliases
-mtpx device add <name>            # save a connected device as an alias
+mtpx device list                  # show aliases and connected devices
+mtpx device add [name]            # interactive setup (name prompted if omitted)
 mtpx device remove <name>
 mtpx device default <name>        # set default for multi-device setups
 mtpx device default --clear

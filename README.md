@@ -103,7 +103,19 @@ When no `@alias` is given, mtpx resolves the device through this chain:
 3. Default device from config
 4. Interactive picker (TTY only)
 
-Config lives at `~/.config/mtpx/config.toml`.
+Config lives at `~/.config/mtpx/config.toml`:
+
+```toml
+default = "phone"
+
+[aliases.phone]
+serial = "ABC123DEF456"
+
+[aliases.tablet]
+vendor = "Boox"
+product = "Tab Ultra"
+bus = 2
+```
 
 ## Development
 

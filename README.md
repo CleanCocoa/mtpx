@@ -117,6 +117,39 @@ product = "Tab Ultra"
 bus = 2
 ```
 
+## Example: Supernote Workflows
+
+Set up your Supernote once:
+
+```
+$ mtpx device add
+Found Ratta Supernote
+Alias: sn
+Saved alias 'sn'.
+```
+
+Push a book to read:
+
+```
+mtpx book.pdf @sn:/Document/
+mtpx book.epub @sn:/Document/Books/
+```
+
+Pull your notes:
+
+```
+mtpx @sn:/Note/meeting.note ./
+mtpx -r @sn:/Note/ ./notes-backup/
+```
+
+Browse what's on the device:
+
+```
+mtpx ls @sn:/
+mtpx ls @sn:/Document/
+mtpx ls @sn:/EXPORT/
+```
+
 ## Development
 
 ```

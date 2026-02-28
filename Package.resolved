@@ -1,5 +1,5 @@
 {
-  "originHash" : "b6532e99ea7237a78538402b23ee4db1476af9c9efef3a0636e2622e82364dbc",
+  "originHash" : "7990ba29e588f251e777d2e83937e7f5e379fb01b734807d0d7584be3c6caf1e",
   "pins" : [
     {
       "identity" : "swift-argument-parser",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "c5d11a805e765f52ba34ec7284bd4fcd6ba68615",
         "version" : "1.7.0"
+      }
+    },
+    {
+      "identity" : "swift-mtp",
+      "kind" : "remoteSourceControl",
+      "location" : "https://codeberg.org/ctietze/swift-mtp.git",
+      "state" : {
+        "revision" : "10d34fd1174365ba0dce5b3bc114fd1f84d78b39",
+        "version" : "0.9.1"
       }
     },
     {

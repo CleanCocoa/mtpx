@@ -6,7 +6,7 @@ let package = Package(
 	name: "mtpx",
 	platforms: [.macOS(.v26)],
 	dependencies: [
-		.package(path: "../swift-mtp"),
+		.package(url: "https://codeberg.org/ctietze/swift-mtp.git", from: "0.9.1"),
 		.package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
 		.package(url: "https://github.com/LebJe/TOMLKit", from: "0.6.0"),
 	],

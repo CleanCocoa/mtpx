@@ -6,6 +6,7 @@ struct Mtpx: AsyncParsableCommand {
 		commandName: "mtpx",
 		abstract: "Transfer files to and from MTP devices.",
 		version: "0.3.0",
-		subcommands: [Ls.self, DeviceCommand.self]
+		subcommands: [Transfer.self, Ls.self, DeviceCommand.self],
+		defaultSubcommand: Transfer.self
 	)
 }

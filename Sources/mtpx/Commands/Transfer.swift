@@ -2,6 +2,12 @@ import ArgumentParser
 import Foundation
 import SwiftMTPAsync
 
+#if canImport(Glibc)
+	@preconcurrency import Glibc
+#elseif canImport(Musl)
+	@preconcurrency import Musl
+#endif
+
 struct Transfer: AsyncParsableCommand {
 	static let configuration = CommandConfiguration(
 		commandName: "transfer",

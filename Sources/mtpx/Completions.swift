@@ -2,6 +2,12 @@ import ArgumentParser
 import Foundation
 import SwiftMTPAsync
 
+#if canImport(Glibc)
+	@preconcurrency import Glibc
+#elseif canImport(Musl)
+	@preconcurrency import Musl
+#endif
+
 enum Completions {
 	static func remotePath(
 		_ words: [String],

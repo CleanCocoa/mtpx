@@ -15,8 +15,8 @@ jobs:
       - name: Select Xcode 26
         run: sudo xcode-select -s /Applications/Xcode_26.app
 
-      - name: Install libmtp
-        run: brew install libmtp
+      - name: Install dependencies
+        run: brew install pkg-config libmtp
 
       - name: Build
         run: swift build

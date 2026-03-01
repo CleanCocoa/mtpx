@@ -1,7 +1,7 @@
 import SwiftMTPAsync
 
 enum DevicePicker {
-	static func pick(from devices: [RawDevice], config: DeviceConfig) throws -> ResolvedDevice? {
+	static func pick(from devices: [DetectedDevice], config: DeviceConfig) throws -> ResolvedDevice? {
 		guard !devices.isEmpty else { return nil }
 
 		print("Multiple MTP devices found:\n")

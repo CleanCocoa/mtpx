@@ -2,10 +2,10 @@ import Foundation
 import SwiftMTPAsync
 
 struct ResolvedDevice: Sendable {
-	var raw: RawDevice
+	var raw: DetectedDevice
 	var alias: DeviceAlias
 
-	static func alias(for raw: RawDevice, serialNumber: String?) -> DeviceAlias {
+	static func alias(for raw: DetectedDevice, serialNumber: String?) -> DeviceAlias {
 		if let serial = serialNumber, !serial.isEmpty {
 			return .serial(serial)
 		}
@@ -14,12 +14,12 @@ struct ResolvedDevice: Sendable {
 }
 
 struct DeviceResolver: Sendable {
-	var detectDevices: @Sendable () throws -> [RawDevice]
+	var detectDevices: @Sendable () throws -> [DetectedDevice]
 	var environment: @Sendable (String) -> String?
 	var loadConfig: @Sendable () throws -> DeviceConfig
 	var isTTY: Bool
-	var pickDevice: @Sendable ([RawDevice], DeviceConfig) throws -> ResolvedDevice?
-	var getSerial: @Sendable (RawDevice) async throws -> String?
+	var pickDevice: @Sendable ([DetectedDevice], DeviceConfig) throws -> ResolvedDevice?
+	var getSerial: @Sendable (DetectedDevice) async throws -> String?
 
 	static var live: DeviceResolver {
 		DeviceResolver(
@@ -90,7 +90,7 @@ struct DeviceResolver: Sendable {
 		return picked
 	}
 
-	private func findMatch(in devices: [RawDevice], for alias: DeviceAlias) async throws -> RawDevice? {
+	private func findMatch(in devices: [DetectedDevice], for alias: DeviceAlias) async throws -> DetectedDevice? {
 		switch alias {
 		case .serial(let serial):
 			for device in devices {

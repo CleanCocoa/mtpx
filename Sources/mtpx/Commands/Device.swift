@@ -57,7 +57,7 @@ struct DeviceCommand: AsyncParsableCommand {
 				throw DeviceResolverError.noDevices
 			}
 
-			let selected: RawDevice
+			let selected: DetectedDevice
 			if devices.count == 1 {
 				selected = devices[0]
 				print("Found \(selected.vendor) \(selected.product)")

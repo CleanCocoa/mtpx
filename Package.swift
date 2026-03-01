@@ -9,7 +9,7 @@ let package = Package(
 		.executable(name: "mtpx", targets: ["mtpx"])
 	],
 	dependencies: [
-		.package(url: "https://codeberg.org/ctietze/swift-mtp.git", from: "0.9.1"),
+		.package(url: "https://codeberg.org/ctietze/swift-mtp.git", from: "0.11.0"),
 		.package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
 		.package(url: "https://github.com/LebJe/TOMLKit", from: "0.6.0"),
 	],

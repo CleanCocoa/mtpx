@@ -3,15 +3,15 @@ import Testing
 
 @testable import mtpx
 
-private func makeRawDevice(
+private func makeDetectedDevice(
 	vendor: String = "TestVendor",
 	product: String = "TestProduct",
 	bus: UInt32 = 1,
 	devnum: UInt8 = 1,
 	vendorId: UInt16 = 0,
 	productId: UInt16 = 0
-) -> RawDevice {
-	RawDevice(
+) -> DetectedDevice {
+	DetectedDevice(
 		busLocation: BusLocation(rawValue: bus),
 		devnum: DeviceNumber(rawValue: devnum),
 		vendor: vendor,
@@ -22,12 +22,12 @@ private func makeRawDevice(
 }
 
 private func makeResolver(
-	devices: [RawDevice] = [],
+	devices: [DetectedDevice] = [],
 	env: @escaping @Sendable (String) -> String? = { _ in nil },
 	config: DeviceConfig = DeviceConfig(),
 	isTTY: Bool = false,
-	pickDevice: @escaping @Sendable ([RawDevice], DeviceConfig) throws -> ResolvedDevice? = { _, _ in nil },
-	getSerial: @escaping @Sendable (RawDevice) async throws -> String? = { _ in nil }
+	pickDevice: @escaping @Sendable ([DetectedDevice], DeviceConfig) throws -> ResolvedDevice? = { _, _ in nil },
+	getSerial: @escaping @Sendable (DetectedDevice) async throws -> String? = { _ in nil }
 ) -> DeviceResolver {
 	DeviceResolver(
 		detectDevices: { devices },
@@ -48,7 +48,7 @@ struct DeviceResolverTests {
 	}
 
 	@Test func `resolve returns single device when exactly one connected`() async throws {
-		let device = makeRawDevice()
+		let device = makeDetectedDevice()
 		let resolver = makeResolver(devices: [device])
 		let result = try await resolver.resolve()
 		#expect(result.raw.vendor == "TestVendor")
@@ -57,7 +57,7 @@ struct DeviceResolverTests {
 	}
 
 	@Test func `resolve uses MTPX_DEVICE env var with fallback alias`() async throws {
-		let device = makeRawDevice(vendor: "Samsung", product: "Galaxy", bus: 5)
+		let device = makeDetectedDevice(vendor: "Samsung", product: "Galaxy", bus: 5)
 		var config = DeviceConfig()
 		config.aliases["phone"] = .fallback(vendor: "Samsung", product: "Galaxy", bus: 5)
 		let resolver = makeResolver(
@@ -84,7 +84,7 @@ struct DeviceResolverTests {
 	}
 
 	@Test func `resolve uses serial alias with getSerial closure`() async throws {
-		let device = makeRawDevice(vendor: "Sony", product: "Walkman", bus: 3)
+		let device = makeDetectedDevice(vendor: "Sony", product: "Walkman", bus: 3)
 		var config = DeviceConfig()
 		config.aliases["walkman"] = .serial("SN12345")
 		let resolver = makeResolver(
@@ -100,8 +100,8 @@ struct DeviceResolverTests {
 
 	@Test func `resolve uses config default when multiple devices`() async throws {
 		let devices = [
-			makeRawDevice(vendor: "A", product: "DevA", bus: 1),
-			makeRawDevice(vendor: "B", product: "DevB", bus: 2, devnum: 2),
+			makeDetectedDevice(vendor: "A", product: "DevA", bus: 1),
+			makeDetectedDevice(vendor: "B", product: "DevB", bus: 2, devnum: 2),
 		]
 		var config = DeviceConfig()
 		config.defaultDevice = "main"
@@ -113,8 +113,8 @@ struct DeviceResolverTests {
 
 	@Test func `resolve throws ambiguousDevice when not TTY and multiple devices`() async {
 		let devices = [
-			makeRawDevice(vendor: "A", product: "DevA", bus: 1),
-			makeRawDevice(vendor: "B", product: "DevB", bus: 2, devnum: 2),
+			makeDetectedDevice(vendor: "A", product: "DevA", bus: 1),
+			makeDetectedDevice(vendor: "B", product: "DevB", bus: 2, devnum: 2),
 		]
 		let resolver = makeResolver(devices: devices, isTTY: false)
 		await #expect(throws: DeviceResolverError.ambiguousDevice(2)) {
@@ -124,8 +124,8 @@ struct DeviceResolverTests {
 
 	@Test func `resolve calls pickDevice when TTY and multiple devices`() async throws {
 		let devices = [
-			makeRawDevice(vendor: "A", product: "DevA", bus: 1),
-			makeRawDevice(vendor: "B", product: "DevB", bus: 2, devnum: 2),
+			makeDetectedDevice(vendor: "A", product: "DevA", bus: 1),
+			makeDetectedDevice(vendor: "B", product: "DevB", bus: 2, devnum: 2),
 		]
 		let resolver = makeResolver(
 			devices: devices,
@@ -144,8 +144,8 @@ struct DeviceResolverTests {
 
 	@Test func `resolve throws cancelled when picker returns nil`() async {
 		let devices = [
-			makeRawDevice(vendor: "A", product: "DevA", bus: 1),
-			makeRawDevice(vendor: "B", product: "DevB", bus: 2, devnum: 2),
+			makeDetectedDevice(vendor: "A", product: "DevA", bus: 1),
+			makeDetectedDevice(vendor: "B", product: "DevB", bus: 2, devnum: 2),
 		]
 		let resolver = makeResolver(devices: devices, isTTY: true)
 		await #expect(throws: DeviceResolverError.cancelled) {
@@ -155,8 +155,8 @@ struct DeviceResolverTests {
 
 	@Test func `resolve fuzzy matches product name`() async throws {
 		let devices = [
-			makeRawDevice(vendor: "Samsung", product: "Galaxy S24", bus: 1),
-			makeRawDevice(vendor: "Google", product: "Pixel 8", bus: 2, devnum: 2),
+			makeDetectedDevice(vendor: "Samsung", product: "Galaxy S24", bus: 1),
+			makeDetectedDevice(vendor: "Google", product: "Pixel 8", bus: 2, devnum: 2),
 		]
 		let resolver = makeResolver(devices: devices)
 		let result = try await resolver.resolve(alias: "pixel")
@@ -165,8 +165,8 @@ struct DeviceResolverTests {
 
 	@Test func `resolve throws when fuzzy match is ambiguous`() async {
 		let devices = [
-			makeRawDevice(vendor: "Samsung", product: "Galaxy S24", bus: 1),
-			makeRawDevice(vendor: "Samsung", product: "Galaxy Tab", bus: 2, devnum: 2),
+			makeDetectedDevice(vendor: "Samsung", product: "Galaxy S24", bus: 1),
+			makeDetectedDevice(vendor: "Samsung", product: "Galaxy Tab", bus: 2, devnum: 2),
 		]
 		let resolver = makeResolver(devices: devices)
 		await #expect(throws: DeviceResolverError.aliasNotConnected("galaxy")) {
@@ -175,7 +175,7 @@ struct DeviceResolverTests {
 	}
 
 	@Test func `resolve prefers explicit alias over env var`() async throws {
-		let device = makeRawDevice(vendor: "A", product: "DevA", bus: 1)
+		let device = makeDetectedDevice(vendor: "A", product: "DevA", bus: 1)
 		var config = DeviceConfig()
 		config.aliases["explicit"] = .fallback(vendor: "A", product: "DevA", bus: 1)
 		config.aliases["fromenv"] = .fallback(vendor: "A", product: "DevA", bus: 1)

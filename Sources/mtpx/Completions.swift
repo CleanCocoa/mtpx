@@ -2,12 +2,6 @@ import ArgumentParser
 import Foundation
 import SwiftMTPAsync
 
-#if canImport(Glibc)
-	@preconcurrency import Glibc
-#elseif canImport(Musl)
-	@preconcurrency import Musl
-#endif
-
 enum Completions {
 	static func remotePath(
 		_ words: [String],
@@ -149,24 +143,6 @@ enum Completions {
 		if let data = try? JSONEncoder().encode(completions) {
 			try? data.write(to: file)
 		}
-	}
-
-	private static func muteStderr() -> Int32 {
-		fflush(stderr)
-		let saved = dup(STDERR_FILENO)
-		let devNull = open("/dev/null", O_WRONLY)
-		if devNull >= 0 {
-			dup2(devNull, STDERR_FILENO)
-			close(devNull)
-		}
-		return saved
-	}
-
-	private static func restoreStderr(_ saved: Int32) {
-		guard saved >= 0 else { return }
-		fflush(stderr)
-		dup2(saved, STDERR_FILENO)
-		close(saved)
 	}
 
 	private static func pathCompletions(for input: String) async -> [String] {

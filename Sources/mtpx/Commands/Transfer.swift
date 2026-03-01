@@ -2,12 +2,6 @@ import ArgumentParser
 import Foundation
 import SwiftMTPAsync
 
-#if canImport(Glibc)
-	@preconcurrency import Glibc
-#elseif canImport(Musl)
-	@preconcurrency import Musl
-#endif
-
 struct Transfer: AsyncParsableCommand {
 	static let configuration = CommandConfiguration(
 		commandName: "transfer",
@@ -244,7 +238,7 @@ struct Transfer: AsyncParsableCommand {
 			if pct != lastPct {
 				lastPct = pct
 				print("\r\(name): \(pct)%", terminator: "    ")
-				fflush(stdout)
+				flushStdout()
 			}
 			return .continue
 		}

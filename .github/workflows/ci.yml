@@ -21,6 +21,15 @@ jobs:
       - name: Test
         run: swift test
 
+      - name: Build release
+        run: swift build --configuration release
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtpx-macos-arm64
+          path: .build/release/mtpx
+
   build-and-test-linux:
     runs-on: ubuntu-24.04
     container: swift:6.2-noble
@@ -35,3 +44,12 @@ jobs:
 
       - name: Test
         run: swift test
+
+      - name: Build release
+        run: swift build --configuration release
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtpx-linux-amd64
+          path: .build/release/mtpx

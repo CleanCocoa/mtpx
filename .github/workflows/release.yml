@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags: ["[0-9]+.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install pkg-config libmtp
+
+      - name: Build release
+        run: swift build --configuration release
+
+      - name: Package
+        run: tar --create --bzip2 --file mtpx-macos-arm64.tar.bz2 --directory .build/release mtpx
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtpx-macos-arm64
+          path: mtpx-macos-arm64.tar.bz2
+
+  build-linux:
+    runs-on: ubuntu-24.04
+    container: swift:6.2-noble
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y libmtp-dev pkg-config
+
+      - name: Build release
+        run: swift build --configuration release
+
+      - name: Package
+        run: tar --create --bzip2 --file mtpx-linux-amd64.tar.bz2 --directory .build/release mtpx
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtpx-linux-amd64
+          path: mtpx-linux-amd64.tar.bz2
+
+  release:
+    needs: [build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" artifacts/*.tar.bz2 --generate-notes

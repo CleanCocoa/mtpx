@@ -13,7 +13,7 @@ struct Mtpx: AsyncParsableCommand {
 			  mtpx --generate-completion-script zsh \
 			    > ~/.zsh/completions/_mtpx
 			""",
-		version: "0.6.0",
+		version: "0.6.1",
 		subcommands: [Transfer.self, Sync.self, Ls.self, DeviceCommand.self],
 		defaultSubcommand: Transfer.self
 	)

@@ -17,11 +17,11 @@ uninstall:
 	rm -f "$(bindir)/mtpx"
 
 .PHONY: release
-release: release/mtpx-$(version).tar.bz2
+release: release/mtpx-$(version).tar.gz
 
-release/mtpx-$(version).tar.bz2: build
+release/mtpx-$(version).tar.gz: build
 	mkdir -p release
-	tar --create --bzip2 --file release/mtpx-$(version).tar.bz2 --directory .build/release mtpx
+	tar czf release/mtpx-$(version).tar.gz -C .build/release mtpx
 
 .PHONY: clean
 clean:
